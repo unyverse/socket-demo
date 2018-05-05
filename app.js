@@ -66,8 +66,13 @@ io.on('connect', socket => {
 
 	socket.on('move', data => {
 		console.log(chalk.green(':: Socket.IO :: ') + socket.client.userid + ' moved: ' + data.x + '|' + data.y);
-		entityData[socket.client.userid].x += (data.x/100);
-		entityData[socket.client.userid].y += (data.y/100);
+		const entity = entityData[socket.client.userid];
+		if ((entity.x + (data.x/100)) <= 1 && (entity.x + (data.x/100)) >= 0) {
+			entity.x += (data.x/100);
+		}
+		if ((entity.y + (data.y/100)) <= 1 && (entity.y + (data.y/100)) >= 0) {
+			entity.y += (data.y/100);
+		}
 		io.emit('entity-move', {
 			id: socket.client.userid,
 			x: entityData[socket.client.userid].x,
