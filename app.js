@@ -5,6 +5,7 @@ const io = require('socket.io')(http, {
 });
 const uuid = require('uuid/v1');
 const chalk = require('chalk');
+const fs = require('fs');
 
 http.listen(5000, () => {
 	console.log(chalk.green(':: HTTP :: ') + 'Listening on port 5000');
@@ -16,9 +17,16 @@ app.get('/', (req, res) => {
 });
 
 app.get('/*', (req, res, next) => {
-	const file = req.params[0]; 
-	console.log(chalk.green(':: Express :: ') + 'GET ' + file);
-	res.sendFile( __dirname + '/static/' + file );
+	const file = req.params[0];
+	fs.access(__dirname + '/static/' + file, err => {
+		if (err) {
+			console.log(chalk.red(':: Express :: ') + 'GET ' + err);
+			res.status(404).send('/' + file + ' is not available')
+		} else {
+			res.sendFile( __dirname + '/static/' + file );
+			console.log(chalk.green(':: Express :: ') + 'GET ' + file);
+		}
+	});
 });
 
 let entityData = {};
@@ -64,6 +72,14 @@ io.on('connect', socket => {
 			id: socket.client.userid,
 			x: entityData[socket.client.userid].x,
 			y: entityData[socket.client.userid].y
+		});
+	});
+
+	socket.on('message', data => {
+		console.log(chalk.green(':: Socket.IO :: ') + socket.client.userid + ' message: ' + data.text);
+		io.emit('entity-message', {
+			id: socket.client.userid,
+			text: data.text
 		});
 	});
 });
